@@ -1,7 +1,8 @@
 # cocoOS
 A cooperative operating system based on coroutines
 
-cocoOS is a free, open source, cooperative task scheduler, based on coroutines targeted for embedded microcontrollers like AVR, MSP430 and STM32.
+cocoOS is a free, open source, cooperative task scheduler, based on coroutines targeted for embedded microcontrollers.
+**This is a port of cocoOS for [ch32fun](https://github.com/cnlohr/ch32fun) framework**
 
 
 Task procedures scheduled by cooperative kernels are so called RTC's, run to completion tasks. They execute from the first line of the procedure to the last line. 

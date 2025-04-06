@@ -85,9 +85,9 @@ void os_task_init( void ) {
         task->msgChangeEvent = 0;
         task->msgResult = 0;
         task->prio = 0;
-        task->savedState = SUSPENDED;
+        task->savedState = TASK_SUSPENDED;
         task->semaphore = NO_SEM;
-        task->state = SUSPENDED;
+        task->state = TASK_SUSPENDED;
         task->taskproc = 0;
         task->tid = NO_TID;
         task->time = 0;
@@ -152,8 +152,8 @@ uint8_t task_create( taskproctype taskproc, void *data, uint8_t prio, Msg_t *msg
 
     task->tid = nTasks;
     task->prio = prio;
-    task->state = READY;
-    task->savedState = READY;
+    task->state = TASK_READY;
+    task->savedState = TASK_READY;
     task->semaphore = 0;
     task->internal_state = 0;
     task->taskproc = taskproc;
@@ -285,7 +285,7 @@ uint8_t os_task_highest_prio_ready_task( void ) {
         prio = task->prio;
         state = task->state;
 
-        if ( READY == state ) {
+        if ( TASK_READY == state ) {
             if ( prio < highest_prio ) {
                 highest_prio = prio;
                 highest_prio_task = index;
@@ -317,7 +317,7 @@ uint8_t os_task_next_ready_task( void ) {
     nChecked = 0;
     
     do {
-        if ( READY == task_list[ index ].state ) {
+        if ( TASK_READY == task_list[ index ].state ) {
             last_running_task = index;
             found = 1;
             break;
@@ -353,7 +353,7 @@ void os_task_release_waiting_task( Sem_t sem ) {
 
     for ( tid = 0; tid != nTasks; ++tid ) {
         task = &task_list[ tid ];
-        taskIsWaitingForThisSemaphore = (( task->state == WAITING_SEM ) && ( task->semaphore == sem ) );
+        taskIsWaitingForThisSemaphore = (( task->state == TASK_WAITING_SEM ) && ( task->semaphore == sem ) );
 
         if ( taskIsWaitingForThisSemaphore == 1 ) {
 			#if (ROUND_ROBIN)
@@ -381,7 +381,7 @@ void os_task_release_waiting_task( Sem_t sem ) {
 		}
 	#endif			
     if ( NO_TID != foundTask ) {
-        task_list[ foundTask ].state = READY;
+        task_list[ foundTask ].state = TASK_READY;
     }
 }
 
@@ -395,7 +395,7 @@ uint8_t os_task_waiting_this_semaphore( Sem_t sem ) {
 
     for ( tid = 0; tid != nTasks; ++tid ) {
         task = &task_list[ tid ];
-        taskIsWaitingForThisSemaphore = (( task->state == WAITING_SEM ) && ( task->semaphore == sem ) );
+        taskIsWaitingForThisSemaphore = (( task->state == TASK_WAITING_SEM ) && ( task->semaphore == sem ) );
 
         if ( taskIsWaitingForThisSemaphore == 1 ) {
             result = 1;
@@ -431,13 +431,13 @@ void os_task_suspend( uint8_t tid ) {
 
     state = task_list[ tid ].state;
     
-    if (( state != KILLED ) && ( state != SUSPENDED )){
+    if (( state != TASK_KILLED ) && ( state != TASK_SUSPENDED )){
         /* If a task is waiting for a semaphore when beeing suspended, there is a risk      */
         /* that the semaphore will be signaled while the task is suspended, and if the task */
         /* is then resumed it could hang if the semaphore is not signaled again. Therefore  */
         /* the task is reset when it is resumed. */
-        if ( WAITING_SEM == state ) {
-            task_list[ tid ].savedState = READY;
+        if ( TASK_WAITING_SEM == state ) {
+            task_list[ tid ].savedState = TASK_READY;
             task_list[ tid ].internal_state = 0;
         }
         else {
@@ -453,7 +453,7 @@ void os_task_resume( uint8_t tid ) {
     
     os_assert( tid < nTasks );
 
-    if ( task_list[ tid ].state == SUSPENDED ) {
+    if ( task_list[ tid ].state == TASK_SUSPENDED ) {
 	    task_list[ tid ].state = task_list[ tid ].savedState;
     }
 }
@@ -554,12 +554,12 @@ void os_task_tick( uint8_t id, uint32_t tickSize ) {
     for ( index = 0; index != nTasks; ++index ) {
 		TaskState_t state;
 		state = task_list[ index ].state;
-    if (( state == WAITING_TIME ) || ( state == WAITING_EVENT_TIMEOUT )){
+    if (( state == TASK_WAITING_TIME ) || ( state == TASK_WAITING_EVENT_TIMEOUT )){
         /* Found a waiting task, is it ready? */
         if ( task_list[ index ].clockId == id ) {
           if ( task_list[ index ].time <= tickSize ) {
             task_list[ index ].time = 0;
-            if ( state == WAITING_EVENT_TIMEOUT ) {
+            if ( state == TASK_WAITING_EVENT_TIMEOUT ) {
               os_task_clear_wait_queue( index );
             }
             task_ready_set( index );
@@ -569,7 +569,7 @@ void os_task_tick( uint8_t id, uint32_t tickSize ) {
           }
         }
     }
-		else if ( state ==  WAITING_SEM ) {
+		else if ( state ==  TASK_WAITING_SEM ) {
 			task_list[ index ].time++;
 		}
 
@@ -600,7 +600,7 @@ void os_task_signal_event( Evt_t eventId ) {
       state = task_list[ index ].state;
       taskWaitStateOK = 0;
 
-      if (( state == WAITING_EVENT ) || ( state == WAITING_EVENT_TIMEOUT )) {
+      if (( state == TASK_WAITING_EVENT ) || ( state == TASK_WAITING_EVENT_TIMEOUT )) {
           taskWaitStateOK = 1;
       }
             
@@ -670,36 +670,36 @@ uint32_t os_task_timeout_get(uint8_t tid) {
 }
 
 static void task_wait_sem_set( uint8_t tid, Sem_t sem ) {
-    task_list[ tid ].state = WAITING_SEM;
+    task_list[ tid ].state = TASK_WAITING_SEM;
     task_list[ tid ].semaphore = sem;
 }
 
 
 static void task_ready_set( uint8_t tid ) {
-    task_list[ tid ].state = READY;
+    task_list[ tid ].state = TASK_READY;
 }
 
 
 static void task_suspended_set( uint8_t tid ) {
-    task_list[ tid ].state = SUSPENDED;
+    task_list[ tid ].state = TASK_SUSPENDED;
 }
 
 
 static void task_waiting_time_set( uint8_t tid ) {
-    task_list[ tid ].state = WAITING_TIME;
+    task_list[ tid ].state = TASK_WAITING_TIME;
 }
 
 
 static void task_waiting_event_set( tcb *task ) {
-    task->state = WAITING_EVENT;
+    task->state = TASK_WAITING_EVENT;
 }
 
 
 static void task_waiting_event_timeout_set( tcb *task ) {
-    task->state = WAITING_EVENT_TIMEOUT;
+    task->state = TASK_WAITING_EVENT_TIMEOUT;
 }
 
 
 static void task_killed_set( uint8_t tid ) {
-    task_list[ tid ].state = KILLED;
+    task_list[ tid ].state = TASK_KILLED;
 }

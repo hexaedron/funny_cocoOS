@@ -49,14 +49,14 @@ extern "C" {
 typedef struct tcb tcb;
 
 typedef enum {
-    SUSPENDED,
-    WAITING_SEM,
-    WAITING_TIME,
-    WAITING_EVENT,
-	WAITING_EVENT_TIMEOUT,
-    READY,
-    RUNNING,
-    KILLED
+    TASK_SUSPENDED,
+    TASK_WAITING_SEM,
+    TASK_WAITING_TIME,
+    TASK_WAITING_EVENT,
+	TASK_WAITING_EVENT_TIMEOUT,
+    TASK_READY,
+    TASK_RUNNING,
+    TASK_KILLED
 } TaskState_t;
 
 
