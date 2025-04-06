@@ -32,7 +32,6 @@ To setup cocoOS you have to define 6 macros. They can be setup in os_defines.h, 
     - N_SEMAPHORES: maximum number of semaphores  (0-254, default=0)
     - N_EVENTS: maximum number of events          (0-254, default=0)
     - ROUND_ROBIN: should round robin scheduling be used ? (0)
-    - Mem_t: address type, e.g. uint32_t          (uint32_t)
 
 Asserts will fire if the maximum numbers are violated during runtime. 
 
